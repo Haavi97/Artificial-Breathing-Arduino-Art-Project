@@ -4,7 +4,7 @@
 ## Hardware
 Tested on:
 - Arduino Uno
-- Arduino Nano
+- Arduino Nano (had to solve driver problems with original board: [link](https://www.usb-drivers.org/ft232r-usb-uart-driver.html))
 
 ## TODO
 Add Fritxzing sketch
