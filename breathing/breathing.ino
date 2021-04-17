@@ -84,5 +84,4 @@ void loop() {
   digitalWrite(compressor, LOW);
   myservo.write(closed_angle);
   delay(rest_time);
-  
 }
