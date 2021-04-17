@@ -9,12 +9,20 @@
  *              controlled by a relay from one hand and  
  *              another compressor and a vacuum pump also 
  *              controlled with relays.
+ *              Part of the program that goes for the ESP-01 
+ *              (ESP8266) and works as a server communicating
+ *              the needed commands to an Arduino
  * 
   */
 
 
-#include <WiFi.h>
-#include <AsyncTCP.h>
+#ifdef ESP32
+  #include <WiFi.h>
+  #include <AsyncTCP.h>
+#else
+  #include <ESP8266WiFi.h>
+  #include <ESPAsyncTCP.h>
+#endif
 #include <ESPAsyncWebServer.h>
 
 #include "breathing-esp.h"
@@ -62,11 +70,6 @@ String slider2Value = "1000";
 String slider3Value = "1000";
 String slider4Value = "1000";
 String slider5Value = "1000";
-
-// setting PWM properties
-const int freq = 5000;
-const int ledChannel = 0;
-const int resolution = 8;
 
 const char* PARAM_INPUT = "value";
 const char* PARAM_INPUT2 = "id";
@@ -159,27 +162,13 @@ String processor(const String& var){
 }
 
 void setup(){
-  pinMode(compressor, OUTPUT);
-  pinMode(pump, OUTPUT);
-  pinMode(vacuum, OUTPUT);
-  
-  // Serial port for debugging purposes
-  //Serial.begin(115200);
-
-  // Setting static ip address
-  //if (!WiFi.config(local_IP, gateway, subnet)) {
-  //  Serial.println("STA Failed to configure");
-  //}
+  Serial.begin(115200);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    //Serial.println("Connecting to WiFi..");
   }
-
-  // Print ESP Local IP Address
-  //Serial.println(WiFi.localIP());
 
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -197,34 +186,33 @@ void setup(){
       if (inputId == "1"){
         slider1Value = inputMessage;
         vacuum_time = slider1Value.toInt();
-        //Serial.print("Vacuum time: ");
-        //Serial.println(slider1Value);
+        Serial.print("v");
+        Serial.println(slider1Value);
       } else if (inputId == "2"){
         slider2Value = inputMessage;
         pump_time = slider2Value.toInt();
-        //Serial.print("Pump time: ");
-        //Serial.println(slider2Value);
+        Serial.print("p");
+        Serial.println(slider2Value);
       } else if (inputId == "3"){
         slider3Value = inputMessage;
         pause_time = slider3Value.toInt();
-        //Serial.print("Pause time: ");
-        //Serial.println(slider3Value);
+        Serial.print("a");
+        Serial.println(slider3Value);
       } else if (inputId == "4"){
         slider4Value = inputMessage;
         compressor_time = slider4Value.toInt();
-        //Serial.print("Compressor time: ");
-        //Serial.println(slider4Value);
+        Serial.print("c");
+        Serial.println(slider4Value);
       } else if (inputId == "5"){
         slider5Value = inputMessage;
         compressor_pause = slider5Value.toInt();
-        //Serial.print("Compressor pause time: ");
-        //Serial.println(slider5Value);
+        Serial.print("r");
+        Serial.println(slider5Value);
       } 
     }
     else {
       inputMessage = "No message sent";
     }
-    //Serial.println(inputMessage);
     request->send(200, "text/plain", "OK");
   });
   
@@ -237,40 +225,4 @@ void setup(){
 }
   
 void loop() {
-  current = millis();
-
-  if (current > (last_compressor + compressor_time + compressor_pause)){
-    //Serial.println("Compressor ON");
-    digitalWrite(compressor, HIGH);
-    last_compressor = current;
-    print_compressor_pause = true;
-  } else if (current > (last_compressor + compressor_time)){
-    if (print_compressor_pause){
-      //Serial.println("Compressor OFF");
-      digitalWrite(compressor, LOW);
-      print_compressor_pause = false;
-    }
-  }
-
-  if (current > (last_vacuum + vacuum_time + pause_time + pump_time)){
-    //Serial.println("Pump OFF");
-    digitalWrite(pump, LOW);
-    //Serial.println("Vacuum ON");
-    digitalWrite(vacuum, HIGH);
-    last_vacuum = current;
-    print_vacuum = true;
-  } else if (current > (last_vacuum + vacuum_time)){
-    if (print_vacuum){
-      //Serial.println("Vacuum OFF");
-      digitalWrite(vacuum, LOW);
-      print_vacuum = false;
-      print_pump = true;
-    }
-  } else if (current > last_vacuum + vacuum_time + pause_time){
-    if (print_pump){
-      //Serial.println("Pump ON");
-      digitalWrite(pump, HIGH);
-      print_pump = false;
-    }
-  }
 }
