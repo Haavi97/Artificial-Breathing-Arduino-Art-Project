@@ -16,9 +16,6 @@
   */
   
 #include <EEPROM.h>
-#include <Servo.h>
-
-Servo myservo;
 
 unsigned long EEPROM_readlong(int address);
 void EEPROM_writelong(int address, unsigned long value);
@@ -65,16 +62,15 @@ void setup(){
   pinMode(pump, OUTPUT);
   pinMode(vacuum, OUTPUT);
 
-  myservo.attach(servoPin);
+  pinMode(servoPin, OUTPUT);
   
   // Serial port for debugging purposes
   Serial.begin(115200);
 
   digitalWrite(compressor, HIGH);
+  digitalWrite(servoPin, HIGH);
   digitalWrite(vacuum, HIGH);
   digitalWrite(pump, LOW);
-
-  myservo.write(closed_angle);
 }
   
 void loop() {
@@ -83,7 +79,7 @@ void loop() {
     if (current > (last_compressor + compressor_time + compressor_pause)){
       if (to_update){
         Serial.println("Compressor ON");
-        myservo.write(closed_angle);
+        digitalWrite(servoPin, HIGH);
         digitalWrite(compressor, HIGH);
         last_compressor = current;
         print_compressor_pause = true;
@@ -92,14 +88,14 @@ void loop() {
     } else if (current > (last_compressor + compressor_time)){
       if (print_compressor_pause){
         Serial.println("Compressor OFF");
-        myservo.write(open_angle);
+        digitalWrite(servoPin, LOW);
         digitalWrite(compressor, LOW);
         print_compressor_pause = false;
         to_update = true;
       }
     }
   } else{
-      myservo.write(open_angle);
+      digitalWrite(servoPin, LOW);
       digitalWrite(compressor, LOW);
   }
     
