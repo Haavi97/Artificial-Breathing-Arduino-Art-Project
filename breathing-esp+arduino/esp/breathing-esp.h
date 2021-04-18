@@ -1,3 +1,3 @@
 // Network credentials
-const char* ssid = "breathing";
-const char* password = "12345678";
+const char* ssid = "Juss H.";
+const char* password = "breathing";

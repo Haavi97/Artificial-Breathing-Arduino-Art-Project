@@ -39,6 +39,7 @@ unsigned long last_pump = millis();
 unsigned long last_compressor = millis();
 
 unsigned long vacuum_time = 10000;
+unsigned long pvp_time = 10000;
 unsigned long pump_time = 10000;
 unsigned long pause_time = 10000;
 unsigned long compressor_time = 10000;
@@ -70,6 +71,7 @@ String slider2Value = "1000";
 String slider3Value = "1000";
 String slider4Value = "1000";
 String slider5Value = "1000";
+String slider6Value = "1000";
 
 const char* PARAM_INPUT = "value";
 const char* PARAM_INPUT2 = "id";
@@ -81,12 +83,13 @@ const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ESP Web Server</title>
+  <title>Breathing control panel</title>
   <style>
     html {font-family: Arial; display: inline-block; text-align: center;}
     h2 {font-size: 2.3rem;}
     p {font-size: 1.9rem;}
     body {max-width: 400px; margin:0px auto; padding-bottom: 25px;}
+    .button1 {border-radius: 12px; padding: 20px; font-size: 16px;}
     .slider { -webkit-appearance: none; margin: 14px; width: 360px; height: 25px; background: #FFD65C;
       outline: none; -webkit-transition: .2s; transition: opacity .2s;}
     .slider::-webkit-slider-thumb {-webkit-appearance: none; appearance: none; width: 35px; height: 35px; background: #003249; cursor: pointer;}
@@ -95,8 +98,15 @@ const char index_html[] PROGMEM = R"rawliteral(
 </head>
 <body>
   <h2>Breathing control panel</h2>
+  <button onclick="switchButton2()" class="button button1">Pause/Play pump</button>
+  <br>
+  <button onclick="switchButton()" class="button button1">Pause/Play compressor</button>
+  
   <p>Vacuum in: <span id="vacuumSliderValue">%SLIDERVALUE1%</span></p>
   <p><input type="range" onchange="updateSliderPWM(this, 1)" id="vacuumSlider" min="0" max="10000" value="%SLIDERVALUE1%" step="1" class="slider"></p>
+  
+  <p>Pause vacuum-pump: <span id="pvpSliderValue">%SLIDERVALUE6%</span></p>
+  <p><input type="range" onchange="updateSliderPWM(this, 6)" id="pvpSlider" min="0" max="10000" value="%SLIDERVALUE6%" step="1" class="slider"></p>
   
   <p>Pump: <span id="pumpSliderValue">%SLIDERVALUE2%</span></p>
   <p><input type="range" onchange="updateSliderPWM(this, 2)" id="pumpSlider" min="0" max="10000" value="%SLIDERVALUE2%" step="1" class="slider"></p>
@@ -110,6 +120,16 @@ const char index_html[] PROGMEM = R"rawliteral(
   <p>Compressor pause: <span id="compressorPause">%SLIDERVALUE5%</span></p>
   <p><input type="range" onchange="updateSliderPWM(this, 5)" id="compressorPauseSlider" min="0" max="10000" value="%SLIDERVALUE5%" step="1" class="slider"></p>
 <script>
+function switchButton() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/stop", true); 
+  xhr.send();
+}
+function switchButton2() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/switch2", true); 
+  xhr.send();
+}
 function updateSliderPWM(element, idn) {
   switch(idn){
     case 1:
@@ -131,6 +151,10 @@ function updateSliderPWM(element, idn) {
     case 5:
       var id = "compressorPause";
       var sliderValue = document.getElementById("compressorPauseSlider").value;
+      break;
+    case 6:
+      var id = "pvpSliderValue";
+      var sliderValue = document.getElementById("pvpSlider").value;
       break;
   }
   document.getElementById(id).innerHTML = sliderValue;
@@ -157,6 +181,8 @@ String processor(const String& var){
     return slider4Value;
   } else if (var == "SLIDERVALUE5"){
     return slider5Value;
+  } else if (var == "SLIDERVALUE6"){
+    return slider6Value;
   }
   return String();
 }
@@ -208,12 +234,25 @@ void setup(){
         compressor_pause = slider5Value.toInt();
         Serial.print("r");
         Serial.println(slider5Value);
+      }  else if (inputId == "6"){
+        slider6Value = inputMessage;
+        pvp_time = slider6Value.toInt();
+        Serial.print("s");
+        Serial.println(slider6Value);
       } 
     }
     else {
       inputMessage = "No message sent";
     }
     request->send(200, "text/plain", "OK");
+  });
+  server.on("/stop", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("k");
+    request->send_P(200, "text/html", index_html, processor);
+  });
+  server.on("/switch2", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("q");
+    request->send_P(200, "text/html", index_html, processor);
   });
   
   // Start server
