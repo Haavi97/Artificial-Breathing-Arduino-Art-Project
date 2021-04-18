@@ -2,7 +2,7 @@
  * File:        breathing-esp.ino
  * Author:      Francisco Javier Ortín Cervera
  * Created:     17.04.2021
- * Last edit:   17.04.2021
+ * Last edit:   18.04.2021
  *
  * Description: Program for representing the breathing of
  *              a living organism using a compressor
@@ -16,6 +16,9 @@
   */
   
 #include <EEPROM.h>
+#include <Servo.h>
+
+Servo myservo;
 
 unsigned long EEPROM_readlong(int address);
 void EEPROM_writelong(int address, unsigned long value);
@@ -26,6 +29,7 @@ unsigned int EEPROM_readint(int address);
 int const vacuum = 6;
 int const pump = 7;
 int const compressor = 5;
+int const servoPin = 8;
 
 unsigned long current = millis();
 
@@ -40,9 +44,16 @@ unsigned long pause_time = EEPROM_readlong(15);
 unsigned long compressor_time = EEPROM_readlong(20);
 unsigned long compressor_pause = EEPROM_readlong(25);
 
+int closed_angle = 90;
+// initial angle at which the valve is closed
+
+int open_angle = 10;
+// angle at which the valve is open
+
 bool print_compressor_pause = true;
 bool print_pump = true;
 bool print_vacuum = true;
+bool to_update = true;
 
 bool activeCompressor = true;
 bool activePump = true;
@@ -53,6 +64,8 @@ void setup(){
   pinMode(compressor, OUTPUT);
   pinMode(pump, OUTPUT);
   pinMode(vacuum, OUTPUT);
+
+  myservo.attach(servoPin);
   
   // Serial port for debugging purposes
   Serial.begin(115200);
@@ -60,24 +73,33 @@ void setup(){
   digitalWrite(compressor, HIGH);
   digitalWrite(vacuum, HIGH);
   digitalWrite(pump, LOW);
+
+  myservo.write(closed_angle);
 }
   
 void loop() {
   current = millis();
   if (activeCompressor) {
     if (current > (last_compressor + compressor_time + compressor_pause)){
-      Serial.println("Compressor ON");
-      digitalWrite(compressor, HIGH);
-      last_compressor = current;
-      print_compressor_pause = true;
+      if (to_update){
+        Serial.println("Compressor ON");
+        myservo.write(closed_angle);
+        digitalWrite(compressor, HIGH);
+        last_compressor = current;
+        print_compressor_pause = true;
+        to_update = false;
+      }
     } else if (current > (last_compressor + compressor_time)){
       if (print_compressor_pause){
         Serial.println("Compressor OFF");
+        myservo.write(open_angle);
         digitalWrite(compressor, LOW);
         print_compressor_pause = false;
+        to_update = true;
       }
     }
   } else{
+      myservo.write(open_angle);
       digitalWrite(compressor, LOW);
   }
     

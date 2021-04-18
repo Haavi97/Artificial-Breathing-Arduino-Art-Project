@@ -2,7 +2,7 @@
  * File:        breathing-esp.ino
  * Author:      Francisco Javier Ortín Cervera
  * Created:     17.04.2021
- * Last edit:   17.04.2021
+ * Last edit:   18.04.2021
  *
  * Description: Program for representing the breathing of
  *              a living organism using a compressor
