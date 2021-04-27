@@ -25,7 +25,7 @@ unsigned int EEPROM_readint(int address);
 // Setting pin numbers
 int const vacuum = 6;
 int const pump = 7;
-int const compressor = 5;
+int const compressor = 12;
 int const servoPin = 8;
 
 unsigned long current = millis();
