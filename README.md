@@ -31,7 +31,8 @@ Everything is connected to a big power supply with enough amperage for all the m
 [NART exhibition](https://www.nart.ee/en/exhibitions/nart-annual-exhibition-2021-point-of-no-return-attunement-of-attention/)
 
 ## Video of one of the organisms
-![Video](video.mp4)
+[video](https://user-images.githubusercontent.com/57443449/120454942-010f6500-c39d-11eb-900f-e86b6011543a.mp4)
+
 
 ## Contact
 Email: <fortin@taltech.ee>
